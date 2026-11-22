@@ -258,3 +258,44 @@ Pruebas que conviene mencionar:
    variante), pero n ≤ 10 y las podas lo reducen mucho (ver tabla 3.5).
 7. **¿Datos reales?** No. Aseguradoras, planes y precios son simulados y están etiquetados así en la
    API, la BD (`es_simulada CHECK TRUE`), la interfaz y el reporte.
+
+---
+
+## 8. Cuestionario de riesgo con la regla de Bayes (`backend/algorithms/bayes.py`)
+
+**Qué hace.** La pantalla *Cuestionario* estima el nivel de riesgo de salud de la persona
+(`bajo`, `medio`, `alto`) y, con ese resultado, reutiliza el CSP y el ranking para recomendar un seguro.
+
+```
+respuestas ─► bayes.analizar ─► posterior P(nivel | respuestas)
+                              ─► bayes.derivar_criterios ─► PreferenciasIn ─► CSP + ranking (sección 3 y 4)
+```
+
+**Bayes.**  `P(H | E) = P(E | H) · P(H) / P(E)`
+
+| Elemento | En el proyecto |
+| --- | --- |
+| Hipótesis H | nivel de riesgo: bajo / medio / alto |
+| Prior P(H) | según el rango de edad (la persona de 60+ parte con más probabilidad de riesgo alto) |
+| Evidencia E | cada respuesta: fuma, actividad, peso, crónicas, hospitalizaciones, antecedentes |
+| Verosimilitud P(E \| H) | tabla en `bayes.py`: p. ej. P(fuma «sí» \| alto) = 0.35 y P(fuma «sí» \| bajo) = 0.05 |
+| P(E) | probabilidad total: Σ P(E \| H) · P(H) (`ReglaDeBayes.probabilidad_evidencia`) |
+| Posterior | `ReglaDeBayes.posteriores`; `actualizar` lo convierte en el prior de la siguiente respuesta |
+
+- **Clases del profesor:** `ReglaDeBayes` (varias hipótesis) y `PruebaDiagnostica` (dos hipótesis).
+  El cuestionario usa `ReglaDeBayes` con tres hipótesis; `PruebaDiagnostica` queda incluida y probada
+  con sus ejemplos (bacteria 4.72 %, cáncer 9/108).
+- **Probabilidad total aplicada:** `P(hospitalización) = Σ P(hosp | nivel) · P(nivel | respuestas)`,
+  y las *frecuencias naturales* («de cada 1000 personas como tú…») igual que `frecuencias_naturales`.
+- **Supuesto de Bayes ingenuo:** dado el nivel, las respuestas son independientes. Es una simplificación.
+- **Del riesgo al seguro:** índice `r = P(medio)·0.5 + P(alto)`. Mayor `r` ⇒ deducible máximo más bajo,
+  coaseguro acotado, suma asegurada mínima más alta y pesos que migran de «ahorrar» a «protegerse».
+  Si nada cabe en el presupuesto, se relajan por pasos las exigencias no obligatorias y se informa.
+- **Honestidad:** todas las probabilidades son **inventadas e ilustrativas** (igual que el catálogo).
+  No hay datos reales con los que calibrarlas; no es un diagnóstico.
+- **Privacidad:** son datos de salud sensibles, así que el endpoint `/api/cuestionario` los usa solo
+  durante la petición y **no los guarda**; rechaza campos no previstos (422). `/api/recomendaciones`
+  sigue rechazando datos personales.
+
+Pruebas: `tests/test_bayes.py` (suma 1, ejemplos del profesor, encadenamiento de posteriores,
+monotonía del riesgo) y dos pruebas de API en `tests/test_api.py`.

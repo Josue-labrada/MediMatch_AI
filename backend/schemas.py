@@ -265,3 +265,68 @@ class RecomendacionOut(BaseModel):
     menor_prima: Optional[OpcionOut]
     comparacion_baseline: Optional[ComparacionBaselineOut]
     descartes: List[DescarteOut]
+
+
+# ---------------------------------------------------------------- cuestionario (Bayes)
+class CuestionarioIn(BaseModel):
+    """
+    Respuestas del cuestionario de riesgo. Son datos de salud SENSIBLES: se usan solo para esta
+    petición y NO se guardan (ni en la base de datos ni en logs). extra="forbid" rechaza cualquier
+    otro campo (nombre, correo, diagnósticos en texto libre...).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    edad: Literal["18-29", "30-44", "45-59", "60+"]
+    fuma: Literal["no", "ocasional", "si"]
+    actividad: Literal["alta", "media", "baja"]
+    peso: Literal["normal", "sobrepeso", "obesidad"]
+    cronicas: Literal["ninguna", "una", "varias"]
+    hospitalizaciones: Literal["ninguna", "una", "varias"]
+    familiar: Literal["no", "si"]
+    maternidad: Literal["no", "si"] = "no"
+    viajes: Literal["no", "si"] = "no"
+    presupuesto_mensual: float = Field(gt=0, le=200_000, description="MXN por mes")
+
+
+class OpcionPreguntaOut(BaseModel):
+    valor: str
+    etiqueta: str
+
+
+class PreguntaOut(BaseModel):
+    id: str
+    texto: str
+    ayuda: str
+    grupo: Literal["prior", "evidencia", "necesidad"]
+    opciones: List[OpcionPreguntaOut]
+
+
+class PasoBayesOut(BaseModel):
+    pregunta_id: str
+    pregunta: str
+    respuesta: str
+    verosimilitud: Dict[str, float]
+    probabilidad_evidencia: float
+    antes: Dict[str, float]
+    despues: Dict[str, float]
+
+
+class AnalisisRiesgoOut(BaseModel):
+    prior: Dict[str, float]
+    posterior: Dict[str, float]
+    pasos: List[PasoBayesOut]
+    nivel_probable: str
+    nivel_etiqueta: str
+    indice_riesgo: float
+    prob_hospitalizacion: float
+    frecuencias_naturales: Dict[str, float]
+
+
+class CuestionarioOut(BaseModel):
+    aviso: str
+    analisis: AnalisisRiesgoOut
+    razones: List[str]
+    ajustes: List[str]
+    preferencias_derivadas: PreferenciasIn
+    recomendacion: RecomendacionOut

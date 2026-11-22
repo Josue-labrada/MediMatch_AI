@@ -3,10 +3,13 @@
  * Las rutas son relativas (/api/...); en desarrollo Vite las reenvía a FastAPI.
  */
 import type {
+  CuestionarioRequest,
+  CuestionarioResponse,
   EstadoSistema,
   Opciones,
   PlanCatalogo,
   PreferenciasRequest,
+  PreguntaCuestionario,
   RecomendacionResponse,
   Sincronizacion,
 } from '../types/api';
@@ -57,6 +60,12 @@ export const api = {
     request<Sincronizacion>('/api/sync', {
       method: 'POST',
       body: JSON.stringify({ incluir_novedades: incluirNovedades }),
+    }),
+  preguntasCuestionario: () => request<PreguntaCuestionario[]>('/api/cuestionario/preguntas'),
+  evaluarCuestionario: (respuestas: CuestionarioRequest) =>
+    request<CuestionarioResponse>('/api/cuestionario', {
+      method: 'POST',
+      body: JSON.stringify(respuestas),
     }),
   recomendar: (preferencias: PreferenciasRequest) =>
     request<RecomendacionResponse>('/api/recomendaciones', {

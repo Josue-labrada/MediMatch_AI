@@ -177,3 +177,28 @@ def test_escenario_D_sincronizar_producto_nuevo_cambia_resultado(client):
     assert sync["desactivados"] == 1
     final = client.post("/api/recomendaciones", json=PREFS_MATERNIDAD).json()
     assert all(o["plan_external_id"] != "FARO-MATERNA" for o in final["ranking"])
+
+
+CUESTIONARIO_BASE = {
+    "edad": "30-44", "fuma": "no", "actividad": "media", "peso": "sobrepeso", "cronicas": "una",
+    "hospitalizaciones": "ninguna", "familiar": "si", "maternidad": "no", "viajes": "no",
+    "presupuesto_mensual": 5000,
+}
+
+
+def test_cuestionario_bayes_devuelve_analisis_y_recomendacion(client):
+    client.post("/api/sync", json={})
+    preguntas = client.get("/api/cuestionario/preguntas").json()
+    assert {p["grupo"] for p in preguntas} == {"prior", "evidencia", "necesidad"}
+    r = client.post("/api/cuestionario", json=CUESTIONARIO_BASE)
+    assert r.status_code == 200
+    d = r.json()
+    assert sum(d["analisis"]["posterior"].values()) == pytest.approx(1)
+    assert len(d["analisis"]["pasos"]) == 6
+    assert d["recomendacion"]["candidatos_validos"] > 0
+    assert d["preferencias_derivadas"]["coberturas_obligatorias"] == ["hospitalizacion"]
+
+
+def test_cuestionario_rechaza_campos_extra_y_respuestas_invalidas(client):
+    assert client.post("/api/cuestionario", json={**CUESTIONARIO_BASE, "nombre": "Ana"}).status_code == 422
+    assert client.post("/api/cuestionario", json={**CUESTIONARIO_BASE, "fuma": "mucho"}).status_code == 422

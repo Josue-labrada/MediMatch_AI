@@ -15,7 +15,7 @@ from sqlalchemy import func, select
 from .config import CORS_ORIGINS, SYNC_ON_STARTUP
 from .db import SessionLocal
 from .models import PlanDB
-from .routes import catalogo, estado, recomendaciones, sync
+from .routes import catalogo, cuestionario, estado, recomendaciones, sync
 from .services.sync import ErrorSincronizacion, sincronizar
 
 log = logging.getLogger("medimatch")
@@ -60,3 +60,4 @@ app.include_router(estado.router)
 app.include_router(catalogo.router)
 app.include_router(sync.router)
 app.include_router(recomendaciones.router)
+app.include_router(cuestionario.router)

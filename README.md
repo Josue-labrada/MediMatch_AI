@@ -47,7 +47,7 @@ el catálogo real e integración con FastAPI + PostgreSQL (sincronización, priv
 frontend/              React + TypeScript + Vite + Tailwind (Liquid Glass)
   src/services/api.ts  única capa que habla con el backend
 backend/
-  algorithms/          ← IA: modelos.py · csp.py · ranking.py (Python puro, sin BD)
+  algorithms/          ← IA: modelos.py · csp.py · ranking.py · bayes.py (Python puro, sin BD)
   services/            repositorio.py (BD → dataclasses) · sync.py · recomendador.py
   routes/              endpoints FastAPI
 mock_insurance_api/    servicio FastAPI que simula un proveedor externo (catálogo JSON)

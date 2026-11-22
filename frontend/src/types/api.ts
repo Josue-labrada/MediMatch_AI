@@ -182,3 +182,48 @@ export interface EstadoSistema {
   catalogo: Record<string, number>;
   ultima_sincronizacion: Sincronizacion | null;
 }
+
+// ---------------------------------------------------------------- cuestionario (Bayes)
+export type NivelRiesgo = 'bajo' | 'medio' | 'alto';
+export type Distribucion = Record<NivelRiesgo, number>;
+
+export interface PreguntaCuestionario {
+  id: string;
+  texto: string;
+  ayuda: string;
+  grupo: 'prior' | 'evidencia' | 'necesidad';
+  opciones: Array<{ valor: string; etiqueta: string }>;
+}
+
+export interface PasoBayes {
+  pregunta_id: string;
+  pregunta: string;
+  respuesta: string;
+  verosimilitud: Distribucion;
+  probabilidad_evidencia: number;
+  antes: Distribucion;
+  despues: Distribucion;
+}
+
+export interface AnalisisRiesgo {
+  prior: Distribucion;
+  posterior: Distribucion;
+  pasos: PasoBayes[];
+  nivel_probable: NivelRiesgo;
+  nivel_etiqueta: string;
+  indice_riesgo: number;
+  prob_hospitalizacion: number;
+  frecuencias_naturales: Record<string, number>;
+}
+
+/** Respuestas por id de pregunta (texto) más `presupuesto_mensual` (número). */
+export type CuestionarioRequest = Record<string, string | number>;
+
+export interface CuestionarioResponse {
+  aviso: string;
+  analisis: AnalisisRiesgo;
+  razones: string[];
+  ajustes: string[];
+  preferencias_derivadas: PreferenciasRequest;
+  recomendacion: RecomendacionResponse;
+}
