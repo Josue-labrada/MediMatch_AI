@@ -1,0 +1,88 @@
+# MediMatch IA — orquestación local completa.
+#   db        PostgreSQL 16          localhost:5433 (5432 dentro de Docker)
+#   mock_api  Mock Insurance API     localhost:8001  (catálogo SIMULADO)
+#   backend   FastAPI + algoritmos   localhost:8000  (docs: /docs)
+#   frontend  React + Vite           localhost:5173
+name: medimatch
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-medimatch}
+      POSTGRES_USER: ${POSTGRES_USER:-medimatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD: copia .env.example a .env}
+    ports:
+      # 5433 en el host para no chocar con un PostgreSQL ya instalado en la máquina.
+      - "${DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Se ejecuta solo la primera vez (cuando el volumen está vacío).
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  mock_api:
+    build: ./mock_insurance_api
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./mock_insurance_api:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-medimatch}:${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-medimatch}
+      MOCK_API_URL: http://mock_api:8001
+      SYNC_ON_STARTUP: "true"
+      CORS_ORIGINS: http://localhost:5173
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./tests:/app/tests
+      - ./database:/app/database:ro
+      - ./mock_insurance_api:/app/mock_insurance_api:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      mock_api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      # Necesario para detectar cambios de archivos montados desde macOS/Windows.
+      - VITE_USE_POLLING=true
+      # Vite reenvía /api y /health al backend dentro de la red de Docker.
+      - API_PROXY_TARGET=http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -1,0 +1,110 @@
+{
+  "aseguradoras": [
+    {
+      "external_id": "faro",
+      "nombre": "Faro Salud (simulada)"
+    }
+  ],
+  "coberturas": [
+    {
+      "codigo": "hospitalizacion",
+      "nombre": "Hospitalización y cirugía",
+      "descripcion": "Gastos hospitalarios, honorarios médicos y cirugía."
+    },
+    {
+      "codigo": "emergencia_extranjero",
+      "nombre": "Emergencia en el extranjero",
+      "descripcion": "Atención de urgencias durante viajes fuera de México."
+    },
+    {
+      "codigo": "cobertura_internacional",
+      "nombre": "Cobertura internacional",
+      "descripcion": "Tratamientos programados en hospitales fuera de México."
+    },
+    {
+      "codigo": "maternidad",
+      "nombre": "Maternidad",
+      "descripcion": "Parto, cesárea y complicaciones del embarazo."
+    },
+    {
+      "codigo": "dental",
+      "nombre": "Dental",
+      "descripcion": "Limpiezas, curaciones y extracciones básicas."
+    },
+    {
+      "codigo": "vision",
+      "nombre": "Visión",
+      "descripcion": "Examen de la vista y apoyo para lentes."
+    },
+    {
+      "codigo": "salud_mental",
+      "nombre": "Salud mental",
+      "descripcion": "Consultas de psicología y psiquiatría."
+    },
+    {
+      "codigo": "checkup",
+      "nombre": "Check-up preventivo",
+      "descripcion": "Revisión médica preventiva anual."
+    },
+    {
+      "codigo": "telemedicina",
+      "nombre": "Telemedicina 24/7",
+      "descripcion": "Orientación médica por videollamada."
+    },
+    {
+      "codigo": "ambulancia_aerea",
+      "nombre": "Ambulancia aérea",
+      "descripcion": "Traslado aéreo en emergencias."
+    }
+  ],
+  "planes": [
+    {
+      "external_id": "FARO-MATERNA",
+      "aseguradora_external_id": "faro",
+      "nombre": "Faro Materna",
+      "nivel": "Intermedio",
+      "suma_asegurada": 12000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 20000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 2240
+        },
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 1900
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "maternidad",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "dental",
+          "tipo": "opcional",
+          "costo_extra": 140
+        }
+      ],
+      "reglas": []
+    }
+  ]
+}

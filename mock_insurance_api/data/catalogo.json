@@ -1,0 +1,873 @@
+{
+  "aseguradoras": [
+    {
+      "external_id": "alfa",
+      "nombre": "Alfa Salud (simulada)"
+    },
+    {
+      "external_id": "boreal",
+      "nombre": "Boreal Seguros (simulada)"
+    },
+    {
+      "external_id": "cumbre",
+      "nombre": "Cumbre Médica (simulada)"
+    },
+    {
+      "external_id": "delta",
+      "nombre": "Delta Protección (simulada)"
+    }
+  ],
+  "coberturas": [
+    {
+      "codigo": "hospitalizacion",
+      "nombre": "Hospitalización y cirugía",
+      "descripcion": "Gastos hospitalarios, honorarios médicos y cirugía."
+    },
+    {
+      "codigo": "emergencia_extranjero",
+      "nombre": "Emergencia en el extranjero",
+      "descripcion": "Atención de urgencias durante viajes fuera de México."
+    },
+    {
+      "codigo": "cobertura_internacional",
+      "nombre": "Cobertura internacional",
+      "descripcion": "Tratamientos programados en hospitales fuera de México."
+    },
+    {
+      "codigo": "maternidad",
+      "nombre": "Maternidad",
+      "descripcion": "Parto, cesárea y complicaciones del embarazo."
+    },
+    {
+      "codigo": "dental",
+      "nombre": "Dental",
+      "descripcion": "Limpiezas, curaciones y extracciones básicas."
+    },
+    {
+      "codigo": "vision",
+      "nombre": "Visión",
+      "descripcion": "Examen de la vista y apoyo para lentes."
+    },
+    {
+      "codigo": "salud_mental",
+      "nombre": "Salud mental",
+      "descripcion": "Consultas de psicología y psiquiatría."
+    },
+    {
+      "codigo": "checkup",
+      "nombre": "Check-up preventivo",
+      "descripcion": "Revisión médica preventiva anual."
+    },
+    {
+      "codigo": "telemedicina",
+      "nombre": "Telemedicina 24/7",
+      "descripcion": "Orientación médica por videollamada."
+    },
+    {
+      "codigo": "ambulancia_aerea",
+      "nombre": "Ambulancia aérea",
+      "descripcion": "Traslado aéreo en emergencias."
+    }
+  ],
+  "planes": [
+    {
+      "external_id": "ALFA-ESENCIAL",
+      "aseguradora_external_id": "alfa",
+      "nombre": "Alfa Esencial",
+      "nivel": "Básico",
+      "suma_asegurada": 5000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 1450
+        },
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 1220
+        },
+        {
+          "deducible": 80000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 1010
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "opcional",
+          "costo_extra": 120
+        },
+        {
+          "codigo": "dental",
+          "tipo": "opcional",
+          "costo_extra": 180
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "opcional",
+          "costo_extra": 150
+        }
+      ],
+      "reglas": []
+    },
+    {
+      "external_id": "ALFA-PLUS",
+      "aseguradora_external_id": "alfa",
+      "nombre": "Alfa Plus",
+      "nivel": "Intermedio",
+      "suma_asegurada": 15000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 20000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 3070
+        },
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 2600
+        },
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 15,
+          "prima_mensual": 2180
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "maternidad",
+          "tipo": "opcional",
+          "costo_extra": 650
+        },
+        {
+          "codigo": "dental",
+          "tipo": "opcional",
+          "costo_extra": 190
+        },
+        {
+          "codigo": "vision",
+          "tipo": "opcional",
+          "costo_extra": 110
+        },
+        {
+          "codigo": "salud_mental",
+          "tipo": "opcional",
+          "costo_extra": 240
+        }
+      ],
+      "reglas": [
+        {
+          "tipo": "deducible_max",
+          "cobertura": "maternidad",
+          "cobertura_objetivo": null,
+          "valor": 30000
+        }
+      ]
+    },
+    {
+      "external_id": "ALFA-PREMIUM",
+      "aseguradora_external_id": "alfa",
+      "nombre": "Alfa Premium",
+      "nivel": "Premium",
+      "suma_asegurada": 50000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 10000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 6760
+        },
+        {
+          "deducible": 20000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 5780
+        },
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 4900
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "maternidad",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "salud_mental",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "cobertura_internacional",
+          "tipo": "opcional",
+          "costo_extra": 1100
+        },
+        {
+          "codigo": "ambulancia_aerea",
+          "tipo": "opcional",
+          "costo_extra": 260
+        },
+        {
+          "codigo": "dental",
+          "tipo": "opcional",
+          "costo_extra": 210
+        },
+        {
+          "codigo": "vision",
+          "tipo": "opcional",
+          "costo_extra": 120
+        }
+      ],
+      "reglas": [
+        {
+          "tipo": "requiere",
+          "cobertura": "cobertura_internacional",
+          "cobertura_objetivo": "ambulancia_aerea",
+          "valor": null
+        }
+      ]
+    },
+    {
+      "external_id": "BOREAL-BASICO",
+      "aseguradora_external_id": "boreal",
+      "nombre": "Boreal Básico",
+      "nivel": "Básico",
+      "suma_asegurada": 4000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 990
+        },
+        {
+          "deducible": 80000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 830
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "opcional",
+          "costo_extra": 60
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "opcional",
+          "costo_extra": 110
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "opcional",
+          "costo_extra": 170
+        }
+      ],
+      "reglas": []
+    },
+    {
+      "external_id": "BOREAL-FAMILIAR",
+      "aseguradora_external_id": "boreal",
+      "nombre": "Boreal Familiar",
+      "nivel": "Intermedio",
+      "suma_asegurada": 12000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 20000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 2770
+        },
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 2350
+        },
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 15,
+          "prima_mensual": 1970
+        },
+        {
+          "deducible": 80000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 1640
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "maternidad",
+          "tipo": "opcional",
+          "costo_extra": 520
+        },
+        {
+          "codigo": "dental",
+          "tipo": "opcional",
+          "costo_extra": 160
+        },
+        {
+          "codigo": "vision",
+          "tipo": "opcional",
+          "costo_extra": 100
+        },
+        {
+          "codigo": "salud_mental",
+          "tipo": "opcional",
+          "costo_extra": 210
+        }
+      ],
+      "reglas": [
+        {
+          "tipo": "deducible_max",
+          "cobertura": "maternidad",
+          "cobertura_objetivo": null,
+          "valor": 30000
+        },
+        {
+          "tipo": "excluye",
+          "cobertura": "dental",
+          "cobertura_objetivo": "vision",
+          "valor": null
+        }
+      ]
+    },
+    {
+      "external_id": "BOREAL-GLOBAL",
+      "aseguradora_external_id": "boreal",
+      "nombre": "Boreal Global",
+      "nivel": "Premium",
+      "suma_asegurada": 40000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 20000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 5070
+        },
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 4300
+        },
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 3610
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "cobertura_internacional",
+          "tipo": "opcional",
+          "costo_extra": 950
+        },
+        {
+          "codigo": "maternidad",
+          "tipo": "opcional",
+          "costo_extra": 700
+        },
+        {
+          "codigo": "ambulancia_aerea",
+          "tipo": "opcional",
+          "costo_extra": 230
+        },
+        {
+          "codigo": "salud_mental",
+          "tipo": "opcional",
+          "costo_extra": 220
+        }
+      ],
+      "reglas": [
+        {
+          "tipo": "deducible_max",
+          "cobertura": "cobertura_internacional",
+          "cobertura_objetivo": null,
+          "valor": 30000
+        },
+        {
+          "tipo": "deducible_max",
+          "cobertura": "maternidad",
+          "cobertura_objetivo": null,
+          "valor": 30000
+        }
+      ]
+    },
+    {
+      "external_id": "CUMBRE-PRACTICO",
+      "aseguradora_external_id": "cumbre",
+      "nombre": "Cumbre Práctico",
+      "nivel": "Básico",
+      "suma_asegurada": 6000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 15,
+          "prima_mensual": 1620
+        },
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 1360
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "salud_mental",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "opcional",
+          "costo_extra": 100
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "opcional",
+          "costo_extra": 140
+        }
+      ],
+      "reglas": []
+    },
+    {
+      "external_id": "CUMBRE-INTEGRAL",
+      "aseguradora_external_id": "cumbre",
+      "nombre": "Cumbre Integral",
+      "nivel": "Intermedio",
+      "suma_asegurada": 20000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 10000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 4280
+        },
+        {
+          "deducible": 20000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 3660
+        },
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 3100
+        },
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 2600
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "salud_mental",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "maternidad",
+          "tipo": "opcional",
+          "costo_extra": 600
+        },
+        {
+          "codigo": "dental",
+          "tipo": "opcional",
+          "costo_extra": 170
+        },
+        {
+          "codigo": "vision",
+          "tipo": "opcional",
+          "costo_extra": 95
+        },
+        {
+          "codigo": "cobertura_internacional",
+          "tipo": "opcional",
+          "costo_extra": 1200
+        }
+      ],
+      "reglas": [
+        {
+          "tipo": "deducible_max",
+          "cobertura": "maternidad",
+          "cobertura_objetivo": null,
+          "valor": 20000
+        }
+      ]
+    },
+    {
+      "external_id": "CUMBRE-ELITE",
+      "aseguradora_external_id": "cumbre",
+      "nombre": "Cumbre Élite",
+      "nivel": "Premium",
+      "suma_asegurada": 80000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 10000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 8560
+        },
+        {
+          "deducible": 20000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 7320
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "cobertura_internacional",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "maternidad",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "dental",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "vision",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "salud_mental",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "ambulancia_aerea",
+          "tipo": "incluida",
+          "costo_extra": 0
+        }
+      ],
+      "reglas": []
+    },
+    {
+      "external_id": "DELTA-JOVEN",
+      "aseguradora_external_id": "delta",
+      "nombre": "Delta Joven",
+      "nivel": "Básico",
+      "suma_asegurada": 3000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 820
+        },
+        {
+          "deducible": 80000,
+          "coaseguro_porcentaje": 25,
+          "prima_mensual": 690
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        }
+      ],
+      "reglas": []
+    },
+    {
+      "external_id": "DELTA-BALANCE",
+      "aseguradora_external_id": "delta",
+      "nombre": "Delta Balance",
+      "nivel": "Intermedio",
+      "suma_asegurada": 10000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 20000,
+          "coaseguro_porcentaje": 15,
+          "prima_mensual": 2420
+        },
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 15,
+          "prima_mensual": 2050
+        },
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 20,
+          "prima_mensual": 1720
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "checkup",
+          "tipo": "opcional",
+          "costo_extra": 90
+        },
+        {
+          "codigo": "maternidad",
+          "tipo": "opcional",
+          "costo_extra": 480
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "opcional",
+          "costo_extra": 130
+        },
+        {
+          "codigo": "dental",
+          "tipo": "opcional",
+          "costo_extra": 150
+        },
+        {
+          "codigo": "salud_mental",
+          "tipo": "opcional",
+          "costo_extra": 200
+        }
+      ],
+      "reglas": [
+        {
+          "tipo": "requiere",
+          "cobertura": "maternidad",
+          "cobertura_objetivo": "checkup",
+          "valor": null
+        },
+        {
+          "tipo": "deducible_max",
+          "cobertura": "maternidad",
+          "cobertura_objetivo": null,
+          "valor": 30000
+        }
+      ]
+    },
+    {
+      "external_id": "DELTA-VIAJERO",
+      "aseguradora_external_id": "delta",
+      "nombre": "Delta Viajero",
+      "nivel": "Intermedio",
+      "suma_asegurada": 15000000,
+      "moneda": "MXN",
+      "variantes": [
+        {
+          "deducible": 30000,
+          "coaseguro_porcentaje": 10,
+          "prima_mensual": 2900
+        },
+        {
+          "deducible": 50000,
+          "coaseguro_porcentaje": 15,
+          "prima_mensual": 2440
+        }
+      ],
+      "coberturas": [
+        {
+          "codigo": "hospitalizacion",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "emergencia_extranjero",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "telemedicina",
+          "tipo": "incluida",
+          "costo_extra": 0
+        },
+        {
+          "codigo": "cobertura_internacional",
+          "tipo": "opcional",
+          "costo_extra": 780
+        },
+        {
+          "codigo": "ambulancia_aerea",
+          "tipo": "opcional",
+          "costo_extra": 210
+        },
+        {
+          "codigo": "dental",
+          "tipo": "opcional",
+          "costo_extra": 150
+        }
+      ],
+      "reglas": [
+        {
+          "tipo": "requiere",
+          "cobertura": "cobertura_internacional",
+          "cobertura_objetivo": "ambulancia_aerea",
+          "valor": null
+        },
+        {
+          "tipo": "deducible_max",
+          "cobertura": "cobertura_internacional",
+          "cobertura_objetivo": null,
+          "valor": 30000
+        }
+      ]
+    }
+  ]
+}

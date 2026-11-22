@@ -1,0 +1,260 @@
+# Guía de los algoritmos de MediMatch IA
+
+Documento de estudio para explicar y defender la parte de IA ante el profesor.
+Archivos clave: `backend/algorithms/csp.py`, `backend/algorithms/ranking.py`,
+`backend/algorithms/modelos.py` y `backend/services/recomendador.py`.
+
+---
+
+## 1. La idea en una frase
+
+> El usuario da **restricciones duras** (presupuesto, deducible, coberturas indispensables) y
+> **preferencias** (pesos). Un **CSP con backtracking y forward checking** encuentra *todas* las
+> configuraciones que cumplen las restricciones, y una **función objetivo ponderada** las ordena
+> para elegir la mejor, explicando por qué.
+
+Son dos técnicas del curso que se complementan:
+
+| Pregunta | Técnica | Módulo |
+| --- | --- | --- |
+| ¿Qué opciones son **válidas**? | CSP: backtracking + forward checking | 04 |
+| ¿Cuál válida es la **mejor**? | Búsqueda exhaustiva sobre el conjunto factible con función objetivo | 03 |
+
+---
+
+## 2. Cómo se conectan las piezas
+
+```text
+[Formulario React]  ──POST /api/recomendaciones──►  [FastAPI: routes/recomendaciones.py]
+                                                         │ Pydantic valida (rechaza "edad", etc.)
+                                                         ▼
+                                              [services/recomendador.py]
+                                                         │
+             ┌───────────────────────────────────────────┼─────────────────────────────┐
+             ▼                                           ▼                             ▼
+ [services/repositorio.py]                    [algorithms/csp.py]            [algorithms/ranking.py]
+ PostgreSQL → dataclasses Plan     →    resolver(): soluciones,      →     rankear(): puntaje y orden
+                                        descartes, estadísticas            menor_prima(): línea base
+                                                         │
+                                                         ▼
+                                     Respuesta JSON explicada + fila en tabla `consultas`
+
+[Mock Insurance API :8001] ──HTTP──► [services/sync.py] ──upsert──► PostgreSQL   (POST /api/sync)
+```
+
+Puntos para remarcar:
+
+- **Los algoritmos no conocen la base de datos.** Reciben dataclasses (`modelos.py`). Por eso se
+  prueban con pytest usando datos escritos a mano y se pueden explicar sin infraestructura.
+- **Nada está hardcodeado.** Si cambia el catálogo (sincronizar «Faro Materna») o cambian los pesos,
+  cambia el resultado sin tocar código: escenario D.
+- **El frontend no decide nada.** Solo muestra lo que calcula el backend.
+
+---
+
+## 3. El CSP
+
+### 3.1 Modelado (lo que más preguntan)
+
+**Variables**
+
+| Variable | Significado | Dominio |
+| --- | --- | --- |
+| `P` | plan | planes activos en PostgreSQL |
+| `D` | variante de deducible | variantes **del plan asignado a P** |
+| `C_k` | ¿incluir la cobertura k? | `{1}` si viene incluida · `{1,0}` si es opcional · `{0}` si el plan no la ofrece |
+
+Las variables `C_k` son solo las coberturas que importan: **obligatorias + deseadas** del usuario, y
+las que éstas **arrastran** por reglas «requiere» (cierre transitivo). Así el espacio queda pequeño.
+
+**Restricciones**
+
+| Nombre en código | Tipo | Condición |
+| --- | --- | --- |
+| `suma_asegurada` | unaria (P) | suma(P) ≥ mínimo |
+| `deducible_maximo` | unaria (D) | deducible(D) ≤ máximo |
+| `coaseguro_maximo` | unaria (D) | coaseguro(D) ≤ máximo |
+| `cobertura_obligatoria` | unaria (C_k) | C_k = 1 |
+| `presupuesto` | global | prima(D) + Σ costo(C_k = 1) ≤ presupuesto |
+| `regla_requiere` | binaria (C_a, C_b) | C_a = 1 ⇒ C_b = 1 |
+| `regla_excluye` | binaria (C_a, C_b) | no (C_a = 1 y C_b = 1) |
+| `regla_deducible_max` | binaria (D, C_a) | C_a = 1 ⇒ deducible(D) ≤ valor |
+| `solo_si_requerida` | C_b arrastrada | C_b = 1 solo si alguna C_a = 1 la requiere |
+
+Las reglas viven en la tabla `reglas_compatibilidad`. Ejemplos reales del catálogo:
+- Delta Balance: maternidad **requiere** check-up.
+- Boreal Familiar: dental **excluye** visión.
+- Delta Viajero: cobertura internacional **requiere** ambulancia aérea y **solo con deducible ≤ $30,000**.
+
+### 3.2 ¿Por qué es un CSP y no un `filter()`?
+
+Un filtro revisa cada plan de forma aislada con condiciones fijas. Aquí:
+1. Hay **variables relacionadas entre sí**: el dominio de `D` depende de `P`, y una cobertura
+   depende del deducible (`regla_deducible_max`) o de otra cobertura (`requiere`/`excluye`).
+2. El presupuesto es una restricción **global** sobre la suma de varias variables.
+3. Se construyen **asignaciones parciales** y se podan antes de completarlas.
+4. La salida no es «plan sí o no». Son **configuraciones** (plan + deducible + coberturas), y una
+   regla puede **agregar** una cobertura con su costo, como ambulancia aérea.
+
+### 3.3 Backtracking (`_backtrack`)
+
+```text
+BACKTRACK(i, asignación, dominios):
+    si i == número de variables:  guardar solución; regresar
+    X ← orden[i]                       # orden fijo: D, C_1, …, C_n (P ya asignado)
+    para cada valor v en dominios[X]:
+        nodos_explorados += 1
+        asignación[X] ← v
+        si CONSISTENTE(X, asignación):           # solo restricciones ya evaluables
+            (con FC) nuevos ← FORWARD_CHECK(...)
+            si nada quedó vacío: BACKTRACK(i+1, asignación, nuevos)
+            si no: registrar poda
+        si no: registrar poda
+        quitar X                                  # ← esto es el "backtrack"
+    si ningún valor llevó a solución: backtracks += 1
+```
+
+`CONSISTENTE` (`_consistente`) revisa solo las restricciones que involucran a `X` y cuyas otras
+variables **ya tienen valor**. Si una variable aún no está asignada, la restricción no se puede
+evaluar y no se considera violada.
+
+**Enumeramos todas las soluciones, no solo la primera,** porque el ranking necesita compararlas.
+
+### 3.4 Forward checking (`_forward_checking` y `_dominios_iniciales`)
+
+Después de cada asignación revisa los dominios de las variables **pendientes** y elimina los
+valores que ya son incompatibles con lo asignado. Si un dominio queda **vacío**, la rama se poda
+**antes** de bajar por ella.
+
+Podas concretas que hace:
+1. **Al fijar P:** quita las variantes con deducible o coaseguro por encima del máximo, y quita el 0
+   de las coberturas obligatorias. Si una obligatoria no se ofrece, su dominio `{0}` queda vacío y
+   el plan completo se descarta sin explorar nada.
+2. **Al fijar D:** quita el valor 1 de las coberturas con `deducible_max` < deducible(D), y quita el 1
+   de las opcionales que ya no caben en el presupuesto.
+3. **Al fijar C_a = 1:** quita el 0 de las coberturas que `C_a` requiere y quita el 1 de las que excluye.
+4. **Cota de presupuesto:** si lo asignado + el costo de lo que es forzosamente 1 ya supera el
+   presupuesto, poda.
+
+**Ejemplo para la exposición:** escenario E, Delta Viajero, con internacional obligatoria.
+Con `D = $50,000`, FC revisa `C_internacional`. La regla exige deducible ≤ $30,000, así que se
+quita el 1, y el 0 ya se había quitado por ser obligatoria. El dominio queda vacío y la rama se poda.
+El backtracking simple habría probado las combinaciones de coberturas una por una.
+
+### 3.5 Resultados medidos (catálogo real, `tests/test_escenarios.py`)
+
+Ambos algoritmos encuentran **exactamente las mismas soluciones**; esto lo verifican las pruebas.
+FC explora menos nodos:
+
+| Escenario | Backtracking (nodos) | Backtracking + FC (nodos) | Soluciones |
+| --- | --- | --- | --- |
+| A · presupuesto $1,300 | 51 | 51 | 6 |
+| B · $5,000, 3 deseadas | 225 | 191 | 66 |
+| C · incompatible | 47 | 22 | 0 |
+| D · maternidad $2,700 | 57 | 30 | 1 |
+| E · internacional obligatoria | 101 | 46 | 11 |
+
+En A no hay diferencia porque no hay variables de cobertura que podar: FC no es magia y su ventaja
+crece con el número de restricciones entre variables. La pantalla de resultados y la de algoritmos
+muestran esta comparación para cada búsqueda.
+
+---
+
+## 4. La optimización (`ranking.py`)
+
+### 4.1 Función objetivo
+
+```
+puntaje(x) = Σ_i  w_i · n_i(x)        con Σ w_i = 1  y  0 ≤ n_i ≤ 1   →  se muestra × 100
+```
+
+| Criterio | Valor original | Normalización (min-max dentro del conjunto factible F) |
+| --- | --- | --- |
+| costo | prima total | menor es mejor: (max − x) / (max − min) |
+| deducible | deducible | menor es mejor |
+| coaseguro | % | menor es mejor |
+| suma_asegurada | MXN | mayor es mejor: (x − min) / (max − min) |
+| coberturas | fracción de deseadas incluidas | ya está entre 0 y 1 |
+
+### 4.2 Decisiones documentadas (preguntas típicas)
+
+- **¿Por qué normalizar?** Para comparar pesos y pesos mexicanos con porcentajes en la misma escala.
+- **¿Si todos tienen el mismo deducible?** Si max = min, n = 1 para todos. Ese criterio no afecta el orden.
+- **¿Sin coberturas deseadas?** Ese criterio no aplica y su peso se reparte de forma proporcional.
+- **¿Pesos en 0?** Se usan pesos iguales.
+- **¿Empates?** Orden determinista: puntaje ↓, prima ↑, deducible ↑, `external_id` ↑.
+- **¿Por qué búsqueda exhaustiva?** F tiene decenas o cientos de elementos, así que evaluarlo
+  completo es instantáneo y **garantiza el óptimo global**. A* o búsqueda local no aportan aquí.
+- **¿Por qué la normalización es relativa?** Porque un puntaje depende de las demás opciones.
+  Agregar un plan puede cambiar los puntajes; por ejemplo, en el escenario D Delta Balance pasa de
+  100 a 0 puntos cuando aparece Faro Materna, que es mejor en todo. Es una limitación que se
+  menciona en el reporte.
+- **¿Es machine learning?** **No.** No hay entrenamiento ni datos históricos. Es una función objetivo
+  diseñada por el equipo, con pesos que define el usuario.
+
+### 4.3 Línea base: menor prima
+
+`menor_prima()` elige la opción válida más barata (un solo criterio). La interfaz compara esa opción
+contra la mejor multicriterio. Ejemplo medido (escenario B, $5,000, deseadas maternidad, dental y
+salud mental):
+
+- Pesos «ahorro» (costo 60%): gana **Cumbre Práctico, $1,620**.
+- Pesos «protección» (coberturas 50%): gana **Cumbre Integral con dental y maternidad, $4,430**.
+- La menor prima siempre es **Alfa Esencial, $1,450**.
+
+Esto demuestra que **cambiar las preferencias cambia la recomendación** por efecto del algoritmo.
+
+---
+
+## 5. Escenarios de demostración
+
+Para cada escenario: llena el formulario en http://localhost:5173/buscar, o envía el JSON a
+`POST http://localhost:8000/api/recomendaciones` (puedes probarlo en http://localhost:8000/docs).
+
+| | Presupuesto | Deducible máx. | Obligatorias | Deseadas | Qué demuestra |
+| --- | --- | --- | --- | --- | --- |
+| A | 1,300 | 80,000 | hospitalización | — | Pocos planes compatibles |
+| B | 5,000 | 30,000 | hospitalización | maternidad, dental, salud mental | Cambiar los pesos (Ahorro ↔ Protección) cambia el ganador |
+| C | 2,000 | 30,000 | internacional, maternidad | — | 0 resultados, con el motivo de cada descarte |
+| D | 2,700 | 30,000 | maternidad | — | Sincroniza en Admin con «Incluir productos nuevos» y repite: gana Faro Materna |
+| E | 6,000 | 50,000 | internacional | dental | Reglas «requiere» y «deducible máx.» y menos nodos con FC |
+
+---
+
+## 6. Cómo verificar y guardar evidencia
+
+```bash
+# Todas las pruebas (37): algoritmos, escenarios A–E e integración con PostgreSQL
+docker compose exec backend python -m pytest tests -v
+
+# Solo los algoritmos, sin Docker (Python 3.9+ y pytest)
+python3 -m pytest tests/test_csp.py tests/test_ranking.py tests/test_escenarios.py -v
+```
+
+Pruebas que conviene mencionar:
+- `test_completitud_contra_fuerza_bruta`: el CSP encuentra **exactamente** las mismas soluciones que
+  enumerar todo el espacio. Es correcto y completo.
+- `test_todas_las_soluciones_cumplen_todas_las_restricciones`: verificación independiente de cada
+  solución contra las restricciones originales.
+- `test_forward_checking_mismas_soluciones_menos_nodos`.
+- `test_privacidad_rechaza_campos_no_previstos`: enviar «edad» o «padecimientos» devuelve 422.
+
+---
+
+## 7. Preguntas probables del profesor y respuesta corta
+
+1. **¿Dónde está la IA?** En la formulación como CSP y su resolución con búsqueda con retroceso
+   y propagación (forward checking), más la optimización sobre el espacio factible.
+2. **¿Por qué no un modelo de ML?** No hay datos reales de usuarios ni etiquetas. Inventarlos sería
+   deshonesto. El problema es de decisión con restricciones explícitas, y eso es justo lo que resuelve un CSP.
+3. **¿Garantizan el óptimo?** Sí, respecto a la función objetivo: el CSP es completo (lo prueba la
+   comparación contra fuerza bruta) y la evaluación de F es exhaustiva.
+4. **¿Qué heurísticas de orden usan?** Orden fijo de variables (D antes que coberturas, obligatorias
+   primero) y valor 1 antes que 0. MRV o LCV serían un siguiente paso; con este tamaño de problema
+   no cambian el resultado, solo el número de nodos.
+5. **¿Por qué FC y no AC-3?** FC basta para dominios de tamaño 1 o 2. AC-3 propagaría también entre
+   variables pendientes; es una mejora futura.
+6. **¿Complejidad?** El peor caso es exponencial en el número de coberturas variables (2ⁿ por
+   variante), pero n ≤ 10 y las podas lo reducen mucho (ver tabla 3.5).
+7. **¿Datos reales?** No. Aseguradoras, planes y precios son simulados y están etiquetados así en la
+   API, la BD (`es_simulada CHECK TRUE`), la interfaz y el reporte.
