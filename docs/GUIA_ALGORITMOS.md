@@ -299,3 +299,91 @@ respuestas ─► bayes.analizar ─► posterior P(nivel | respuestas)
 
 Pruebas: `tests/test_bayes.py` (suma 1, ejemplos del profesor, encadenamiento de posteriores,
 monotonía del riesgo) y dos pruebas de API en `tests/test_api.py`.
+
+### 8.1 Ejemplo completo, paso a paso (valores reales del código)
+
+Persona de 45 a 59 años: fuma con frecuencia, actividad baja, sobrepeso, una enfermedad crónica,
+sin hospitalizaciones, sin antecedentes familiares. Prior (por edad): bajo 0.35 · medio 0.40 · alto 0.25.
+
+| Paso | Respuesta | P(E) | Bajo | Medio | Alto |
+| --- | --- | --- | --- | --- | --- |
+| prior | edad 45-59 | , | 0.350 | 0.400 | 0.250 |
+| 1 | fuma: sí, con frecuencia | 0.1650 | 0.106 | 0.364 | 0.530 |
+| 2 | actividad: baja | 0.4167 | 0.038 | 0.262 | 0.700 |
+| 3 | peso: sobrepeso | 0.3443 | 0.022 | 0.266 | 0.712 |
+| 4 | crónicas: una | 0.3798 | 0.005 | 0.245 | 0.749 |
+| 5 | hospitalizaciones: ninguna | 0.4265 | 0.011 | 0.374 | 0.615 |
+| 6 | antecedentes: no | 0.5292 | 0.018 | 0.459 | 0.523 |
+
+**Cómo se calcula el paso 1** (el que conviene saber hacer en el pizarrón):
+
+```text
+numerador   = P(E|H) · P(H)         bajo: 0.05·0.35 = 0.0175   medio: 0.15·0.40 = 0.0600   alto: 0.35·0.25 = 0.0875
+P(E)        = suma de los tres     = 0.1650            (probabilidad total)
+posterior   = numerador / P(E)      bajo 0.106 · medio 0.364 · alto 0.530
+```
+
+**Qué se aprende del ejemplo**
+
+- Las respuestas que **más mueven** la creencia son las que más separan los niveles (fumar y actividad baja
+  la llevan de 0.25 a 0.70 en riesgo alto). Una respuesta que se parece en los tres niveles casi no cambia nada.
+- Una respuesta **tranquilizadora** también cuenta: «sin hospitalizaciones» y «sin antecedentes» **bajan** el
+  riesgo alto (0.749 → 0.615 → 0.523). El resultado final es `alto` por poco margen (0.523 vs 0.459): es
+  una *probabilidad*, no una certeza.
+- Resultado: índice `r = 0.459·0.5 + 0.523 = 0.753`, así que se aplica la rama «riesgo alto» de `derivar_criterios`.
+- **Probabilidad total aplicada:** `P(hosp) = 0.03·0.018 + 0.10·0.459 + 0.28·0.523 = 0.193`. En frecuencias
+  naturales: de cada 1000 personas como ésta, unas **193** tendrían una hospitalización mayor en 12 meses.
+- Contraste: con fuma «no», actividad alta, peso normal y sin crónicas, el posterior queda en
+  bajo 0.902 · medio 0.097 · alto 0.001 (índice 0.05) y se recomienda un plan más barato con deducible alto.
+
+### 8.2 Del riesgo a la recomendación (`derivar_criterios`)
+
+| Índice de riesgo r | Deducible máximo | Coaseguro | Suma asegurada mínima |
+| --- | --- | --- | --- |
+| r < 0.25 (bajo) | el más alto del catálogo | sin tope | sin mínimo |
+| 0.25 ≤ r < 0.55 (medio) | intermedio | sin tope | moderada (percentil 20) |
+| r ≥ 0.55 (alto) | bajo (percentil 20) | acotado | amplia (percentil 45) |
+
+- **Pesos:** se interpolan linealmente entre dos perfiles. Con r = 0 pesa sobre todo el costo (70 %); con r = 1
+  pesan más la suma asegurada, el deducible, el coaseguro y las coberturas (costo baja a 10 %).
+- **Coberturas deseadas:** maternidad y viajes (preguntas de *necesidad*, que **no** entran a Bayes),
+  más telemedicina y checkup si hay crónicas o r ≥ 0.55. Solo se piden las que existen en el catálogo.
+- **Relajación:** si el CSP no encuentra nada dentro del presupuesto, se relajan por pasos las exigencias no
+  obligatorias y se avisa al usuario (no se devuelve una lista vacía sin explicación).
+- Los umbrales 0.25 y 0.55 y los perfiles de pesos son **decisiones de diseño** del equipo, no resultados estadísticos.
+
+### 8.3 Por qué Bayes y no otra técnica
+
+- **Es explicable:** cada paso muestra su prior, su verosimilitud y su posterior; la interfaz lo despliega.
+- **No necesita datos históricos ni entrenamiento**, a diferencia de un clasificador de machine learning.
+  Con la edad como prior y tablas de verosimilitud basta para ilustrar el razonamiento bajo incertidumbre.
+- **Complementa al CSP:** Bayes maneja lo *incierto* (¿qué tan riesgoso soy?) y el CSP lo *exacto*
+  (¿qué configuraciones cumplen las restricciones?). Bayes decide los parámetros y el CSP/ranking los aplica.
+
+### 8.4 Preguntas probables y cómo responder
+
+1. **¿Qué es el prior y de dónde sale?** Es la creencia antes de ver evidencia: P(nivel) según el rango de edad.
+   Los números son ilustrativos; en un sistema real vendrían de datos actuariales.
+2. **¿Qué es la verosimilitud?** `P(respuesta | nivel)`: qué tan común es la respuesta entre quienes tienen ese
+   nivel. Para cada nivel, las de todas las opciones de una pregunta suman 1 (lo verifica `validar_modelo`).
+3. **¿Por qué se divide entre P(E)?** Para normalizar: los numerandos no suman 1; al dividir entre su suma
+   (probabilidad total) el resultado sí es una distribución.
+4. **¿Qué supuesto hace el modelo?** Independencia condicional (Bayes ingenuo): dado el nivel, fumar y el
+   peso no se influyen. Es falso en la realidad (están correlacionados) y **tiende a sobreestimar la
+   confianza**; se acepta por simplicidad y se declara.
+5. **¿Importa el orden de las preguntas?** No en el resultado final: multiplicar verosimilitudes es
+   conmutativo. Solo cambian los posteriores intermedios que se muestran.
+6. **¿Es un diagnóstico médico?** No. Probabilidades inventadas, sin validación clínica ni actuarial.
+7. **¿Qué pasa con los datos de salud?** Se usan solo durante la petición y no se guardan.
+8. **¿Qué mejorarías?** Calibrar con datos reales, modelar dependencias entre variables (red bayesiana),
+   y estimar la incertidumbre del propio posterior.
+
+### 8.5 Cómo probarlo en vivo
+
+```bash
+# Pruebas del algoritmo (suma 1, ejemplos del profesor, encadenamiento, monotonía)
+docker compose exec backend pytest tests/test_bayes.py -v
+```
+
+En la web: **Cuestionario** muestra el posterior después de cada respuesta; **Algoritmos → 4 · Regla de Bayes**
+trae la fórmula y un ejemplo numérico.

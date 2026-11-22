@@ -56,7 +56,7 @@ export function AlgoritmosPage() {
         eyebrow="Cómo funciona"
         eyebrowIcon={BrainCircuit}
         title="Los algoritmos, paso a paso"
-        description="MediMatch combina un problema de satisfacción de restricciones (módulo 04) con búsqueda/optimización exhaustiva sobre sus soluciones (módulo 03)."
+        description="MediMatch combina un problema de satisfacción de restricciones (módulo 04) con búsqueda/optimización exhaustiva sobre sus soluciones (módulo 03). Además, la regla de Bayes estima tu nivel de riesgo a partir del cuestionario."
       />
 
       {/* Flujo */}
@@ -223,6 +223,82 @@ export function AlgoritmosPage() {
             <Info aria-hidden="true" size={18} className="mt-0.5 shrink-0 text-ice-700" />
             No es machine learning: no hay entrenamiento ni datos históricos. Es una función objetivo diseñada por el equipo,
             con pesos que define el usuario.
+          </p>
+        </GlassCard>
+      </section>
+
+      {/* Bayes */}
+      <section aria-labelledby="bayes" className="mt-6 grid gap-6 xl:grid-cols-2">
+        <GlassCard tone="strong" padding="lg">
+          <h2 id="bayes" className="text-2xl font-semibold">4 · Regla de Bayes: estimar tu nivel de riesgo</h2>
+          <p className="mt-3 leading-relaxed text-slate-600">
+            En el cuestionario no sabemos de antemano qué tan riesgosa es tu situación de salud. La{' '}
+            <strong>regla de Bayes</strong> permite empezar con una creencia inicial y <strong>actualizarla</strong> con cada
+            respuesta, hasta obtener la probabilidad de cada nivel de riesgo. Ese resultado se traduce en restricciones y
+            pesos para el CSP y el ranking anteriores.
+          </p>
+          <div className="mt-5 rounded-2xl bg-white/70 p-5 text-center font-mono text-sm text-ice-900 ring-1 ring-white sm:text-base">
+            P(H | E) = P(E | H) · P(H) / P(E)
+          </div>
+          <dl className="mt-5 divide-y divide-ice-100 rounded-2xl bg-white/60 ring-1 ring-white">
+            {[
+              { t: 'H · hipótesis', d: 'Tu nivel de riesgo: bajo, medio o alto.' },
+              { t: 'P(H) · prior', d: 'Lo que creemos antes de preguntar: depende de tu grupo de edad.' },
+              { t: 'E · evidencia', d: 'Cada respuesta: fumas, actividad física, peso, crónicas, hospitalizaciones, antecedentes.' },
+              { t: 'P(E | H) · verosimilitud', d: '¿Qué tan común es esa respuesta entre personas de ese nivel? Por ejemplo, fumar con frecuencia es más común en riesgo alto (0.35) que en bajo (0.05).' },
+              { t: 'P(E) · normalizador', d: 'Σ P(E | H) · P(H): hace que las tres probabilidades sumen 1.' },
+              { t: 'P(H | E) · posterior', d: 'Tu nivel de riesgo actualizado. Sirve como prior de la siguiente respuesta.' },
+            ].map((x) => (
+              <div key={x.t} className="px-4 py-3">
+                <dt className="font-medium text-slate-900">{x.t}</dt>
+                <dd className="text-sm text-slate-600">{x.d}</dd>
+              </div>
+            ))}
+          </dl>
+        </GlassCard>
+
+        <GlassCard tone="tint" padding="lg">
+          <h3 className="text-lg font-semibold">Ejemplo con una respuesta</h3>
+          <p className="mt-3 text-sm leading-relaxed text-slate-700">
+            Tienes entre 45 y 59 años (prior: bajo 0.35 · medio 0.40 · alto 0.25) y respondes que <strong>fumas con
+            frecuencia</strong> (verosimilitud: 0.05 · 0.15 · 0.35).
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[24rem] text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wider text-slate-500">
+                  <th className="py-1.5 font-semibold">Nivel</th>
+                  <th className="py-1.5 text-right font-semibold">Prior</th>
+                  <th className="py-1.5 text-right font-semibold">× Verosimilitud</th>
+                  <th className="py-1.5 text-right font-semibold">= Producto</th>
+                  <th className="py-1.5 text-right font-semibold">Posterior</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ice-200/60 tabular-nums">
+                <tr><td className="py-2 font-medium">Bajo</td><td className="text-right">0.35</td><td className="text-right">0.05</td><td className="text-right">0.0175</td><td className="text-right">10.6 %</td></tr>
+                <tr><td className="py-2 font-medium">Medio</td><td className="text-right">0.40</td><td className="text-right">0.15</td><td className="text-right">0.0600</td><td className="text-right">36.4 %</td></tr>
+                <tr><td className="py-2 font-medium">Alto</td><td className="text-right">0.25</td><td className="text-right">0.35</td><td className="text-right">0.0875</td><td className="text-right font-semibold">53.0 %</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-700">
+            P(E) = 0.0175 + 0.0600 + 0.0875 = <strong>0.165</strong>; cada producto se divide entre ese total. Una sola
+            respuesta ya movió el riesgo alto de 25 % a 53 %. Con la siguiente pregunta, este posterior pasa a ser el nuevo
+            prior y se repite el proceso.
+          </p>
+          <ul className="mt-5 space-y-2 text-sm leading-relaxed text-slate-600">
+            <li>
+              <strong>Bayes ingenuo:</strong> se supone que, dado el nivel, las respuestas son independientes entre sí. Es una
+              simplificación que permite multiplicar las verosimilitudes una por una.
+            </li>
+            <li>
+              <strong>Del riesgo al CSP:</strong> el nivel más probable ajusta presupuesto, deducible máximo y pesos del
+              ranking. Maternidad y viajes no son evidencia de riesgo: solo agregan coberturas deseadas.
+            </li>
+          </ul>
+          <p className="mt-6 flex gap-3 rounded-2xl bg-ice-100/70 p-4 text-sm leading-relaxed text-slate-700 ring-1 ring-ice-200/70">
+            <Info aria-hidden="true" size={18} className="mt-0.5 shrink-0 text-ice-700" />
+            Todas las probabilidades son ilustrativas (prototipo académico): no vienen de estudios médicos ni actuariales.
           </p>
         </GlassCard>
       </section>
